@@ -9,21 +9,29 @@ use App\Http\Requests\LoginAuthRequest;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;  
+use Illuminate\Support\Str;
+use App\Notifications\SignupActive;
 
 class AuthController extends Controller
 {
     public function login(LoginAuthRequest $request){
         $credentials = request(['email', 'password']);
+        $credentials['active'] = 1;
+        $credentials['deleted_at'] = null;
+
         if (!Auth::attempt($credentials)) {
             return response()->json([
-                'message' => 'Unauthorized'], 401);
+                'message' => 'No autorizado'], 401);
         }
+
         $user = $request->user();
         $tokenResult = $user->createToken('Personal Access Token');
         $token = $tokenResult->token;
+
         if ($request->remember_me) {
             $token->expires_at = Carbon::now()->addWeeks(1);
         }
+
         $token->save();
         return response()->json([
             'access_token' => $tokenResult->accessToken,
@@ -39,10 +47,12 @@ class AuthController extends Controller
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => bcrypt($request->password),
+            'activation_token' => Str::random(60),
         ]);
         $user->save();
+        $user->notify(new SignupActive($user));
         return response()->json([
-            'message' => 'Successfully created user!'], 201);
+            'message' => 'Usuario creado correctamente!!'], 201);
        
     }
 
@@ -54,5 +64,17 @@ class AuthController extends Controller
 
     public function user(Request $request){
         return response()->json($request->user());
+    }
+
+    public function signupActivate($token){
+        $user = User::where('activation_token',$token)->first();
+        if (!$user) {
+            return response()->json(['message' => 'El token de activación es invalido'],404);
+        }
+
+        $user->active = true;
+        $user->activation_token = '';
+        $user->save();
+        return $user;
     }
 }
