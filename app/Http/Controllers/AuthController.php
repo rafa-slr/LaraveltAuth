@@ -45,6 +45,8 @@ class AuthController extends Controller
     public function signup(AuthRequest $request){
         $user = new User([
             'name'     => $request->name,
+            'apellido_p'     => $request->apellido_p,
+            'apellido_m'     => $request->apellido_m,
             'email'    => $request->email,
             'password' => bcrypt($request->password),
             'activation_token' => Str::random(60),
@@ -74,6 +76,7 @@ class AuthController extends Controller
 
         $user->active = true;
         $user->activation_token = '';
+        $user->email_verified_at = time();
         $user->save();
         return $user;
     }
