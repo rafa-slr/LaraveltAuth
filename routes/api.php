@@ -25,7 +25,11 @@ Route::group(['prefix' => 'auth'], function () {
     Route::group(['middleware' => 'auth:api'], function() {
         Route::get('logout', 'AuthController@logout');
         Route::get('user', 'AuthController@user');
+
         Route::apiResource('post','PostController');
+        Route::apiResource('comentarios','ComentarioController');
+
+        Route::get('commentsposts/{post}','ComentarioController@showCommentsByPost');
         Route::get('myposts','PostController@findPostsByUser');
     });
 });

@@ -11,6 +11,8 @@ class Comentario extends Model
 
     protected $dates = ['deleted_at'];
     
+    protected $fillable = ['coment, post_id'];
+
     public function post(){
         return $this->belongsTo('App\Post');
     }
